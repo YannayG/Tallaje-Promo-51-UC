@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Tallaje Taller — Captura Rápida</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --ok: #16a34a;
+      --ok-soft: #dcfce7;
+      --warn: #d97706;
+      --warn-soft: #fef3c7;
+      --danger: #dc2626;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 88px;
+    }
+
+    /* Header fijo */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+    }
+    .brand h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0.2px; }
+    .brand small { display: block; font-size: 11px; color: #94a3b8; }
+
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      border: none;
+    }
+    .badge-ok { background: #14532d; color: #86efac; }
+    .badge-warn { background: #78350f; color: #fde68a; }
+    .badge-off { background: #7f1d1d; color: #fecaca; }
+    .icon-btn {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      width: 36px;
+      height: 36px;
+      font-size: 17px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    main { max-width: 680px; margin: 0 auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(15,23,42,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin: 0 0 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Buscador Padrón */
+    .search-wrap { position: relative; }
+    .search-row { display: flex; gap: 8px; }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      padding: 11px 12px;
+      font-size: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    input.warn-input { border-color: var(--warn); background: #fffbeb; }
+
+    .btn-ghost {
+      background: #e2e8f0;
+      color: var(--text);
+      border: none;
+      border-radius: 10px;
+      padding: 0 14px;
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .dropdown {
+      position: absolute;
+      left: 0; right: 0; top: calc(100% + 4px);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 25;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.15);
+      display: none;
+    }
+    .dropdown.open { display: block; }
+    .dropdown-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      gap: 8px;
+    }
+    .dropdown-item:active { background: var(--accent-soft); }
+    .dropdown-item strong { font-size: 14px; display: block; }
+    .dropdown-item span { font-size: 12px; color: var(--muted); }
+    .pill-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .pill-done { background: var(--ok-soft); color: var(--ok); }
+    .pill-pend { background: #f1f5f9; color: var(--muted); }
+
+    /* Grid campos */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+      display: flex;
+      justify-content: space-between;
+    }
+    .field label .hint { color: var(--warn); font-weight: 700; }
+
+    /* Vista previa bordado */
+    .embroidery-box {
+      margin-top: 8px;
+      background: #f8fafc;
+      border: 1.5px dashed #94a3b8;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .embroidery-text {
+      font-family: Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 16px;
+      color: #1e3a8a;
+      word-break: break-word;
+    }
+    .char-count { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    /* Botones segmentados */
+    .seg-group { display: grid; gap: 6px; margin-bottom: 10px; }
+    .seg-2 { grid-template-columns: repeat(2, 1fr); }
+    .seg-7 { grid-template-columns: repeat(7, 1fr); }
+    .seg-btn {
+      padding: 11px 4px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #334155;
+      cursor: pointer;
+      text-align: center;
+    }
+    .seg-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Alertas suaves */
+    #alertBox {
+      display: none;
+      background: var(--warn-soft);
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+
+    /* Barra inferior fija */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      z-index: 30;
+      box-shadow: 0 -2px 10px rgba(15,23,42,0.06);
+    }
+    .btn-save {
+      flex: 1;
+      background: var(--ok);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-save:active { transform: scale(0.99); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .toast.show { opacity: 1; }
+
+    /* Modales */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      z-index: 40;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      width: 100%;
+      max-width: 680px;
+      max-height: 88vh;
+      overflow-y: auto;
+      border-radius: 18px 18px 0 0;
+      padding: 18px 16px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { margin: 0; font-size: 17px; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .record-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .record-item small { color: var(--muted); display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1 id="headerTitle">Tallaje Taller</h1>
+    <small id="progressText">Medidos: 0 / 500</small>
+  </div>
+  <div class="header-actions">
+    <button id="syncBadge" class="badge badge-ok" onclick="syncQueue(true)" title="Tocar para sincronizar">
+      ● Sincronizado
+    </button>
+    <button class="icon-btn" onclick="openHistory()" title="Registros guardados">📋</button>
+    <button class="icon-btn" onclick="openSettings()" title="Configuración">⚙️</button>
+  </div>
+</header>
+
+<div id="toast" class="toast">Guardado correctamente</div>
+
+<main>
+  <!-- 1. Buscador de Padrón -->
+  <section class="card">
+    <div class="card-title">
+      <span>1. Buscar Persona (Padrón)</span>
+      <span id="rosterCount">0 en lista</span>
+    </div>
+    <div class="search-wrap">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre o cédula..." autocomplete="off" />
+        <button type="button" class="btn-ghost" onclick="resetForm()">+ Nuevo</button>
+      </div>
+      <div id="searchDropdown" class="dropdown"></div>
+    </div>
+  </section>
+
+  <!-- 2. Identificación y Bordado -->
+  <section class="card">
+    <div class="card-title"><span>2. Datos y Bordado de Camisa</span></div>
+    <div class="grid-2" style="margin-bottom: 10px;">
+      <div class="field">
+        <label for="cedula">Cédula / ID</label>
+        <input type="text" id="cedula" inputmode="numeric" placeholder="Ej. 28123456" />
+      </div>
+      <div class="field">
+        <label for="area">Área / Grupo (Opc.)</label>
+        <input type="text" id="area" placeholder="Ej. Medicina / Admin" />
+      </div>
+    </div>
+    <div class="field" style="margin-bottom: 10px;">
+      <label for="nombreCompleto">Nombre Completo *</label>
+      <input type="text" id="nombreCompleto" placeholder="Ej. Yaldahir Edison Gabriel Gonzalez Guillen" oninput="autoSuggestEmbroidery()" />
+    </div>
+    <div class="field">
+      <label for="bordado">Texto Exacto a Bordar *</label>
+      <input type="text" id="bordado" placeholder="Ej. Dr. Yaldahir Gonzalez Guillen" oninput="updateEmbroideryPreview()" />
+    </div>
+    <div class="embroidery-box">
+      <span class="embroidery-text" id="embroideryPreview">Vista previa bordado</span>
+      <span class="char-count" id="charCount">0 car.</span>
+    </div>
+  </section>
+
+  <!-- 3. Especificaciones Base -->
+  <section class="card">
+    <div class="card-title"><span>3. Corte, Manga y Talla Estándar</span></div>
+
+    <div class="seg-group seg-2" id="corteGroup">
+      <button type="button" class="seg-btn active" data-val="Caballero" onclick="selectSeg('corte', this)">Caballero</button>
+      <button type="button" class="seg-btn" data-val="Dama" onclick="selectSeg('corte', this)">Dama</button>
+    </div>
+
+    <div class="seg-group seg-2" id="mangaGroup">
+      <button type="button" class="seg-btn active" data-val="Larga" onclick="selectSeg('manga', this)">Manga Larga</button>
+      <button type="button" class="seg-btn" data-val="Corta" onclick="selectSeg('manga', this)">Manga Corta</button>
+    </div>
+
+    <label style="font-size:12px; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Talla Estándar Base</label>
+    <div class="seg-group seg-7" id="tallaGroup" style="margin-bottom:0;">
+      <button type="button" class="seg-btn" data-val="XS" onclick="selectSeg('talla', this)">XS</button>
+      <button type="button" class="seg-btn" data-val="S" onclick="selectSeg('talla', this)">S</button>
+      <button type="button" class="seg-btn active" data-val="M" onclick="selectSeg('talla', this)">M</button>
+      <button type="button" class="seg-btn" data-val="L" onclick="selectSeg('talla', this)">L</button>
+      <button type="button" class="seg-btn" data-val="XL" onclick="selectSeg('talla', this)">XL</button>
+      <button type="button" class="seg-btn" data-val="XXL" onclick="selectSeg('talla', this)">XXL</button>
+      <button type="button" class="seg-btn" data-val="3XL" onclick="selectSeg('talla', this)">3XL</button>
+    </div>
+  </section>
+
+  <!-- 4. Medidas Específicas -->
+  <section class="card">
+    <div class="card-title">
+      <span>4. Medidas Específicas (cm)</span>
+      <span style="font-weight:400; text-transform:none;">Teclado numérico</span>
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="pecho">Pecho (Busto / Sisa) <span class="hint" id="h_pecho"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="pecho" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="cintura">Cintura <span class="hint" id="h_cintura"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="cintura" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="espalda">Ancho de espalda <span class="hint" id="h_espalda"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="espalda" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="hombro">Ancho de hombro <span class="hint" id="h_hombro"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="hombro" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="largoCamisa">Largo de camisa <span class="hint" id="h_largoCamisa"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="largoCamisa" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="largoManga">Largo de manga <span class="hint" id="h_largoManga"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="largoManga" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="puno">Contorno de puño <span class="hint" id="h_puno"></span></label>
+        <input type="number" step="0.1" inputmode="decimal" id="puno" placeholder="cm" oninput="validateMeasures()" />
+      </div>
+      <div class="field">
+        <label for="obs">Observación (Opc.)</label>
+        <input type="text" id="obs" placeholder="Ej. Holgada / Reloj" />
+      </div>
+    </div>
+
+    <div id="alertBox" style="margin-top:10px;"></div>
+  </section>
+</main>
+
+<div class="bottom-bar">
+  <button type="button" class="btn-save" onclick="saveRecord()">✓ Guardar Medida</button>
+</div>
+
+<!-- Modal Configuración -->
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙️ Configuración y Padrón</h2>
+      <button class="btn-ghost" onclick="closeModals()">Cerrar</button>
+    </div>
+
+    <div class="field">
+      <label>URL Web App (Google Apps Script)</label>
+      <input type="text" id="cfgApiUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+    </div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label>Nombre del Medidor</label>
+        <input type="text" id="cfgOperator" placeholder="Ej. Medidor 1" />
+      </div>
+      <div class="field">
+        <label>Meta de Personas</label>
+        <input type="number" id="cfgTarget" value="500" />
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveSettings()">Guardar Configuración</button>
+
+    <hr style="border:none; border-top:1px solid #e2e8f0; width:100%;" />
+
+    <div class="field">
+      <label>Cargar Padrón desde Google Sheets (Pestaña "Padron")</label>
+      <button class="btn-ghost" style="padding:11px;" onclick="fetchRosterFromSheets()">⬇️ Descargar Padrón desde Sheets</button>
+    </div>
+
+    <div class="field">
+      <label>O pegar listado CSV (Cedula,Nombre,Area)</label>
+      <textarea id="csvRosterInput" rows="4" placeholder="28123456,Yaldahir Edison Gabriel Gonzalez Guillen,Medicina&#10;15987654,Maria Perez,Administracion"></textarea>
+      <button class="btn-ghost" style="padding:10px; margin-top:4px;" onclick="importCsvRoster()">Importar Listado Pegado</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Historial -->
+<div class="modal-backdrop" id="historyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📋 Registros en este Teléfono</h2>
+      <button class="btn-ghost" onclick="closeModals()">Cerrar</button>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="syncQueue(true)">🔄 Sincronizar Pendientes</button>
+      <button class="btn-ghost" style="padding:10px 14px;" onclick="exportLocalCsv()">⬇️ Exportar CSV</button>
+    </div>
+    <div id="historyList" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+</div>
+
+<script>
+  // Estado en memoria + LocalStorage
+  const KEYS = {
+    CFG: 'tallaje_cfg_v1',
+    ROSTER: 'tallaje_roster_v1',
+    RECORDS: 'tallaje_records_v1',
+    QUEUE: 'tallaje_queue_v1'
+  };
+
+  let state = {
+    corte: 'Caballero',
+    manga: 'Larga',
+    talla: 'M',
+    embroideryTouched: false
+  };
+
+  function getCfg() {
+    return JSON.parse(localStorage.getItem(KEYS.CFG) || '{"apiUrl":"","operator":"Medidor 1","target":500}');
+  }
+  function getRoster() {
+    return JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
+  }
+  function getRecords() {
+    return JSON.parse(localStorage.getItem(KEYS.RECORDS) || '[]');
+  }
+  function getQueue() {
+    return JSON.parse(localStorage.getItem(KEYS.QUEUE) || '[]');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  function updateHeaderStatus() {
+    const cfg = getCfg();
+    const records = getRecords();
+    const roster = getRoster();
+    const queue = getQueue();
+    const total = roster.length > 0 ? roster.length : (cfg.target || 500);
+
+    document.getElementById('progressText').textContent = `Medidos: ${records.length} / ${total}`;
+    document.getElementById('rosterCount').textContent = `${roster.length} en lista`;
+
+    const badge = document.getElementById('syncBadge');
+    if (!navigator.onLine) {
+      badge.className = 'badge badge-off';
+      badge.textContent = `Offline (${queue.length} pend.)`;
+    } else if (queue.length > 0) {
+      badge.className = 'badge badge-warn';
+      badge.textContent = `Pendientes: ${queue.length}`;
+    } else {
+      badge.className = 'badge badge-ok';
+      badge.textContent = '● Sincronizado';
+    }
+  }
+
+  // Botones segmentados
+  function selectSeg(group, btn) {
+    state[group] = btn.dataset.val;
+    btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    validateMeasures();
+  }
+
+  function setSegValue(group, val) {
+    state[group] = val;
+    const container = document.getElementById(group + 'Group');
+    if (!container) return;
+    container.querySelectorAll('.seg-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === val);
+    });
+  }
+
+  // Bordado automático sugerido + vista previa
+  function autoSuggestEmbroidery() {
+    const full = document.getElementById('nombreCompleto').value.trim();
+    const bordadoInput = document.getElementById('bordado');
+    if (!state.embroideryTouched) {
+      const parts = full.split(/\s+/).filter(Boolean);
+      if (parts.length >= 3) {
+        // Sugiere Primer Nombre + Primer Apellido (penúltimo si tiene 4 palabras)
+        const firstName = parts[0];
+        const lastName = parts.length >= 4 ? parts[parts.length - 2] : parts[1];
+        bordadoInput.value = `${firstName} ${lastName}`;
+      } else {
+        bordadoInput.value = full;
+      }
+    }
+    updateEmbroideryPreview();
+  }
+
+  document.getElementById('bordado').addEventListener('input', () => {
+    state.embroideryTouched = true;
+  });
+
+  function updateEmbroideryPreview() {
+    const val = document.getElementById('bordado').value;
+    document.getElementById('embroideryPreview').textContent = val.trim() || 'Vista previa bordado';
+    document.getElementById('charCount').textContent = `${val.length} car.`;
+  }
+
+  // Validación suave anti-dedazo (no bloqueante)
+  function validateMeasures() {
+    const g = id => parseFloat(document.getElementById(id).value);
+    const pecho = g('pecho'), cintura = g('cintura'), espalda = g('espalda'),
+          hombro = g('hombro'), largoCamisa = g('largoCamisa'),
+          largoManga = g('largoManga'), puno = g('puno');
+
+    const warnings = [];
+    const flag = (id, cond, msg) => {
+      const el = document.getElementById(id);
+      const hint = document.getElementById('h_' + id);
+      if (cond) {
+        el.classList.add('warn-input');
+        hint.textContent = '⚠';
+        warnings.push(msg);
+      } else {
+        el.classList.remove('warn-input');
+        hint.textContent = '';
+      }
+    };
+
+    flag('pecho', !isNaN(pecho) && (pecho < 65 || pecho > 165), 'Pecho fuera de rango habitual (65–165 cm).');
+    flag('cintura', !isNaN(cintura) && (cintura < 50 || cintura > 160), 'Cintura fuera de rango habitual (50–160 cm).');
+    flag('espalda', !isNaN(espalda) && (espalda < 30 || espalda > 62), 'Ancho de espalda inusual (30–62 cm).');
+    flag('hombro', !isNaN(hombro) && (hombro < 9 || hombro > 24 || (!isNaN(espalda) && hombro >= espalda / 2)),
+         'Ancho de hombro inusual (revisar que no sea ancho de espalda).');
+    flag('largoCamisa', !isNaN(largoCamisa) && (largoCamisa < 50 || largoCamisa > 95), 'Largo de camisa inusual (50–95 cm).');
+
+    const mangaMin = state.manga === 'Larga' ? 48 : 16;
+    const mangaMax = state.manga === 'Larga' ? 75 : 34;
+    flag('largoManga', !isNaN(largoManga) && (largoManga < mangaMin || largoManga > mangaMax),
+         `Largo de manga ${state.manga.toLowerCase()} inusual (${mangaMin}–${mangaMax} cm).`);
+
+    flag('puno', !isNaN(puno) && (puno < 13 || puno > 48), 'Contorno de puño inusual (13–48 cm).');
+
+    const box = document.getElementById('alertBox');
+    if (warnings.length > 0) {
+      box.style.display = 'block';
+      box.innerHTML = '<strong>Verificar posible error de tipeo:</strong><br>• ' + warnings.join('<br>• ');
+    } else {
+      box.style.display = 'none';
+    }
+    return warnings;
+  }
+
+  // Buscador de padrón
+  const searchInput = document.getElementById('searchInput');
+  const dropdown = document.getElementById('searchDropdown');
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    if (!q) { dropdown.classList.remove('open'); return; }
+    const roster = getRoster();
+    const records = getRecords();
+    const doneIds = new Set(records.map(r => String(r.cedula).trim()).filter(Boolean));
+    const doneNames = new Set(records.map(r => r.nombreCompleto.toLowerCase().trim()));
+
+    const matches = roster.filter(p =>
+      String(p.cedula || '').toLowerCase().includes(q) ||
+      String(p.nombre || '').toLowerCase().includes(q)
+    ).slice(0, 25);
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = '<div class="dropdown-item"><span>Sin coincidencias en padrón. Llena los datos abajo.</span></div>';
+    } else {
+      dropdown.innerHTML = matches.map((p, idx) => {
+        const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
+        return `<div class="dropdown-item" onclick='selectPerson(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+          <div>
+            <strong>${p.nombre}</strong>
+            <span>CI: ${p.cedula || 'S/N'} ${p.area ? '· ' + p.area : ''}</span>
+          </div>
+          <span class="pill-status ${isDone ? 'pill-done' : 'pill-pend'}">${isDone ? '✓ Medido' : 'Pendiente'}</span>
+        </div>`;
+      }).join('');
+    }
+    dropdown.classList.add('open');
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-wrap')) dropdown.classList.remove('open');
+  });
+
+  function selectPerson(p) {
+    dropdown.classList.remove('open');
+    searchInput.value = '';
+    const existing = getRecords().find(r =>
+      (p.cedula && String(r.cedula).trim() === String(p.cedula).trim()) ||
+      r.nombreCompleto.toLowerCase().trim() === String(p.nombre).toLowerCase().trim()
+    );
+    if (existing) {
+      loadRecordIntoForm(existing);
+      showToast('Registro previo cargado para edición');
+    } else {
+      resetForm(false);
+      document.getElementById('cedula').value = p.cedula || '';
+      document.getElementById('nombreCompleto').value = p.nombre || '';
+      document.getElementById('area').value = p.area || '';
+      autoSuggestEmbroidery();
+      document.getElementById('bordado').focus();
+    }
+  }
+
+  function loadRecordIntoForm(r) {
+    document.getElementById('cedula').value = r.cedula || '';
+    document.getElementById('nombreCompleto').value = r.nombreCompleto || '';
+    document.getElementById('area').value = r.area || '';
+    document.getElementById('bordado').value = r.bordado || '';
+    state.embroideryTouched = true;
+    updateEmbroideryPreview();
+    setSegValue('corte', r.corte || 'Caballero');
+    setSegValue('manga', r.manga || 'Larga');
+    setSegValue('talla', r.talla || 'M');
+    ['pecho','cintura','espalda','hombro','largoCamisa','largoManga','puno','obs'].forEach(k => {
+      document.getElementById(k).value = r[k] ?? '';
+    });
+    validateMeasures();
+  }
+
+  function resetForm(notify = true) {
+    ['cedula','nombreCompleto','area','bordado','pecho','cintura','espalda','hombro','largoCamisa','largoManga','puno','obs'].forEach(id => {
+      const el = document.getElementById(id);
+      el.value = '';
+      el.classList.remove('warn-input');
+    });
+    document.querySelectorAll('.hint').forEach(h => h.textContent = '');
+    document.getElementById('alertBox').style.display = 'none';
+    state.embroideryTouched = false;
+    updateEmbroideryPreview();
+    if (notify) showToast('Formulario listo para nueva persona');
+  }
+
+  // Guardar registro (Local + Cola Offline)
+  function saveRecord() {
+    const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
+    const bordado = document.getElementById('bordado').value.trim();
+    if (!nombreCompleto || !bordado) {
+      alert('Por favor completa el Nombre Completo y el Texto a Bordar.');
+      return;
+    }
+
+    const warnings = validateMeasures();
+    const cfg = getCfg();
+    const record = {
+      cedula: document.getElementById('cedula').value.trim(),
+      nombreCompleto,
+      area: document.getElementById('area').value.trim(),
+      bordado,
+      caracteres: bordado.length,
+      corte: state.corte,
+      manga: state.manga,
+      talla: state.talla,
+      largoCamisa: document.getElementById('largoCamisa').value.trim(),
+      largoManga: document.getElementById('largoManga').value.trim(),
+      espalda: document.getElementById('espalda').value.trim(),
+      pecho: document.getElementById('pecho').value.trim(),
+      cintura: document.getElementById('cintura').value.trim(),
+      hombro: document.getElementById('hombro').value.trim(),
+      puno: document.getElementById('puno').value.trim(),
+      obs: document.getElementById('obs').value.trim(),
+      alerta: warnings.length > 0 ? 'REVISAR: ' + warnings.join(' | ') : 'OK',
+      medidor: cfg.operator || 'Medidor 1',
+      timestamp: new Date().toISOString()
+    };
+
+    // Upsert en registros locales
+    const records = getRecords();
+    const idx = records.findIndex(r =>
+      (record.cedula && String(r.cedula).trim() === record.cedula) ||
+      r.nombreCompleto.toLowerCase().trim() === record.nombreCompleto.toLowerCase()
+    );
+    if (idx >= 0) records[idx] = record;
+    else records.unshift(record);
+    localStorage.setItem(KEYS.RECORDS, JSON.stringify(records));
+
+    // Agregar a cola de sincronización
+    const queue = getQueue();
+    queue.push(record);
+    localStorage.setItem(KEYS.QUEUE, JSON.stringify(queue));
+
+    updateHeaderStatus();
+    resetForm(false);
+    showToast(`✓ Guardado: ${record.bordado}`);
+    syncQueue(false);
+  }
+
+  // Sincronización con Google Apps Script
+  async function syncQueue(manual = false) {
+    const cfg = getCfg();
+    const queue = getQueue();
+    if (queue.length === 0) {
+      if (manual) showToast('Todo está sincronizado');
+      return;
+    }
+    if (!cfg.apiUrl) {
+      if (manual) showToast('Configura la URL de Google Sheets en ⚙️');
+      return;
+    }
+    if (!navigator.onLine) {
+      if (manual) showToast('Sin internet. Guardado localmente.');
+      return;
+    }
+
+    try {
+      const res = await fetch(cfg.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ records: queue })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        localStorage.setItem(KEYS.QUEUE, '[]');
+        updateHeaderStatus();
+        if (manual) showToast(`✓ ${queue.length} registros sincronizados`);
+      }
+    } catch (err) {
+      if (manual) showToast('No se pudo conectar. Se reintentará luego.');
+    }
+  }
+
+  window.addEventListener('online', () => { updateHeaderStatus(); syncQueue(false); });
+  window.addEventListener('offline', updateHeaderStatus);
+
+  // Modales: Configuración e Historial
+  function openSettings() {
+    const cfg = getCfg();
+    document.getElementById('cfgApiUrl').value = cfg.apiUrl || '';
+    document.getElementById('cfgOperator').value = cfg.operator || 'Medidor 1';
+    document.getElementById('cfgTarget').value = cfg.target || 500;
+    document.getElementById('settingsModal').classList.add('open');
+  }
+
+  function saveSettings() {
+    const cfg = {
+      apiUrl: document.getElementById('cfgApiUrl').value.trim(),
+      operator: document.getElementById('cfgOperator').value.trim() || 'Medidor 1',
+      target: parseInt(document.getElementById('cfgTarget').value, 10) || 500
+    };
+    localStorage.setItem(KEYS.CFG, JSON.stringify(cfg));
+    updateHeaderStatus();
+    closeModals();
+    showToast('Configuración guardada');
+    syncQueue(false);
+  }
+
+  async function fetchRosterFromSheets() {
+    const cfg = getCfg();
+    if (!cfg.apiUrl) { alert('Primero guarda la URL del Web App.'); return; }
+    try {
+      showToast('Descargando padrón...');
+      const res = await fetch(cfg.apiUrl + '?action=padron');
+      const data = await res.json();
+      if (Array.isArray(data.padron)) {
+        localStorage.setItem(KEYS.ROSTER, JSON.stringify(data.padron));
+        updateHeaderStatus();
+        showToast(`✓ ${data.padron.length} personas cargadas`);
+      } else {
+        alert('No se encontró la pestaña "Padron" o está vacía.');
+      }
+    } catch (e) {
+      alert('Error descargando el padrón. Verifica la conexión y la URL.');
+    }
+  }
+
+  function importCsvRoster() {
+    const raw = document.getElementById('csvRosterInput').value.trim();
+    if (!raw) return;
+    const lines = raw.split(/?
+/).filter(Boolean);
+    const parsed = lines.map(line => {
+      const sep = line.includes(';') ? ';' : ',';
+      const [cedula = '', nombre = '', area = ''] = line.split(sep).map(s => s.trim());
+      return { cedula, nombre, area };
+    }).filter(p => p.nombre && p.nombre.toLowerCase() !== 'nombre');
+
+    localStorage.setItem(KEYS.ROSTER, JSON.stringify(parsed));
+    updateHeaderStatus();
+    showToast(`✓ ${parsed.length} personas importadas`);
+  }
+
+  function openHistory() {
+    const records = getRecords();
+    const list = document.getElementById('historyList');
+    if (records.length === 0) {
+      list.innerHTML = '<p style="color:#64748b; font-size:14px;">Aún no hay medidas guardadas en este dispositivo.</p>';
+    } else {
+      list.innerHTML = records.map((r, i) => `
+        <div class="record-item">
+          <div>
+            <strong>${r.bordado}</strong>
+            <small>${r.nombreCompleto} · CI: ${r.cedula || 'S/N'}</small>
+            <small>${r.corte} · Manga ${r.manga} · Talla <b>${r.talla}</b> · Pecho ${r.pecho || '-'}cm</small>
+          </div>
+          <button class="btn-ghost" style="padding:8px 10px;" onclick="editFromHistory(${i})">Editar</button>
+        </div>
+      `).join('');
+    }
+    document.getElementById('historyModal').classList.add('open');
+  }
+
+  function editFromHistory(idx) {
+    const r = getRecords()[idx];
+    if (r) {
+      loadRecordIntoForm(r);
+      closeModals();
+      showToast('Editando registro');
+    }
+  }
+
+  function exportLocalCsv() {
+    const records = getRecords();
+    if (records.length === 0) { alert('No hay registros para exportar.'); return; }
+    const headers = ['Cedula','NombreCompleto','Area','TextoBordar','Caracteres','Corte','Manga','Talla','LargoCamisa','LargoManga','AnchoEspalda','PechoSisa','Cintura','AnchoHombro','ContornoPuno','Observaciones','Alerta','Medidor','Timestamp'];
+    const rows = records.map(r => [
+      r.cedula, r.nombreCompleto, r.area, r.bordado, r.caracteres, r.corte, r.manga, r.talla,
+      r.largoCamisa, r.largoManga, r.espalda, r.pecho, r.cintura, r.hombro, r.puno, r.obs, r.alerta, r.medidor, r.timestamp
+    ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
+
+    const csv = '﻿' + [headers.join(','), ...rows].join('
+');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `respaldo_tallaje_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  function closeModals() {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
+  }
+
+  // Registro Service Worker para uso 100% Offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
+  updateHeaderStatus();
+</script>
+</body>
+</html>
