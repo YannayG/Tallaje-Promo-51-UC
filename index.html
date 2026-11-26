@@ -35,7 +35,6 @@
       padding-bottom: 88px;
     }
 
-    /* Header fijo */
     header {
       position: sticky;
       top: 0;
@@ -101,7 +100,6 @@
       align-items: center;
     }
 
-    /* Buscador Padrón */
     .search-wrap { position: relative; }
     .search-row { display: flex; gap: 8px; }
     input[type="text"], input[type="number"], textarea {
@@ -159,7 +157,6 @@
     .pill-done { background: var(--ok-soft); color: var(--ok); }
     .pill-pend { background: #f1f5f9; color: var(--muted); }
 
-    /* Grid campos */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .field { display: flex; flex-direction: column; gap: 4px; }
     .field label {
@@ -171,7 +168,6 @@
     }
     .field label .hint { color: var(--warn); font-weight: 700; }
 
-    /* Vista previa bordado */
     .embroidery-box {
       margin-top: 8px;
       background: #f8fafc;
@@ -193,7 +189,6 @@
     }
     .char-count { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
-    /* Botones segmentados */
     .seg-group { display: grid; gap: 6px; margin-bottom: 10px; }
     .seg-2 { grid-template-columns: repeat(2, 1fr); }
     .seg-7 { grid-template-columns: repeat(7, 1fr); }
@@ -214,7 +209,6 @@
       border-color: var(--accent);
     }
 
-    /* Alertas suaves */
     #alertBox {
       display: none;
       background: var(--warn-soft);
@@ -226,7 +220,6 @@
       line-height: 1.4;
     }
 
-    /* Barra inferior fija */
     .bottom-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
@@ -251,7 +244,6 @@
     }
     .btn-save:active { transform: scale(0.99); }
 
-    /* Toast */
     .toast {
       position: fixed;
       top: 66px;
@@ -271,7 +263,6 @@
     }
     .toast.show { opacity: 1; }
 
-    /* Modales */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -512,7 +503,8 @@
 </div>
 
 <script>
-  // Estado en memoria + LocalStorage
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxlkaDn6ZLwSCs6b90NipEhN_BHyaJjfrfe5TxcUs1uEtk_Vvg8MUk4914lC9wK_8Y8/exec';
+
   const KEYS = {
     CFG: 'tallaje_cfg_v1',
     ROSTER: 'tallaje_roster_v1',
@@ -528,7 +520,12 @@
   };
 
   function getCfg() {
-    return JSON.parse(localStorage.getItem(KEYS.CFG) || '{"apiUrl":"","operator":"Medidor 1","target":500}');
+    const saved = JSON.parse(localStorage.getItem(KEYS.CFG) || '{}');
+    return {
+      apiUrl: saved.apiUrl || DEFAULT_API_URL,
+      operator: saved.operator || 'Medidor 1',
+      target: saved.target || 500
+    };
   }
   function getRoster() {
     return JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
@@ -570,7 +567,6 @@
     }
   }
 
-  // Botones segmentados
   function selectSeg(group, btn) {
     state[group] = btn.dataset.val;
     btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
@@ -587,14 +583,12 @@
     });
   }
 
-  // Bordado automático sugerido + vista previa
   function autoSuggestEmbroidery() {
     const full = document.getElementById('nombreCompleto').value.trim();
     const bordadoInput = document.getElementById('bordado');
     if (!state.embroideryTouched) {
       const parts = full.split(/\s+/).filter(Boolean);
       if (parts.length >= 3) {
-        // Sugiere Primer Nombre + Primer Apellido (penúltimo si tiene 4 palabras)
         const firstName = parts[0];
         const lastName = parts.length >= 4 ? parts[parts.length - 2] : parts[1];
         bordadoInput.value = `${firstName} ${lastName}`;
@@ -615,7 +609,6 @@
     document.getElementById('charCount').textContent = `${val.length} car.`;
   }
 
-  // Validación suave anti-dedazo (no bloqueante)
   function validateMeasures() {
     const g = id => parseFloat(document.getElementById(id).value);
     const pecho = g('pecho'), cintura = g('cintura'), espalda = g('espalda'),
@@ -660,7 +653,6 @@
     return warnings;
   }
 
-  // Buscador de padrón
   const searchInput = document.getElementById('searchInput');
   const dropdown = document.getElementById('searchDropdown');
 
@@ -680,7 +672,7 @@
     if (matches.length === 0) {
       dropdown.innerHTML = '<div class="dropdown-item"><span>Sin coincidencias en padrón. Llena los datos abajo.</span></div>';
     } else {
-      dropdown.innerHTML = matches.map((p, idx) => {
+      dropdown.innerHTML = matches.map(p => {
         const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
         return `<div class="dropdown-item" onclick='selectPerson(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
           <div>
@@ -747,7 +739,6 @@
     if (notify) showToast('Formulario listo para nueva persona');
   }
 
-  // Guardar registro (Local + Cola Offline)
   function saveRecord() {
     const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
     const bordado = document.getElementById('bordado').value.trim();
@@ -780,7 +771,6 @@
       timestamp: new Date().toISOString()
     };
 
-    // Upsert en registros locales
     const records = getRecords();
     const idx = records.findIndex(r =>
       (record.cedula && String(r.cedula).trim() === record.cedula) ||
@@ -790,7 +780,6 @@
     else records.unshift(record);
     localStorage.setItem(KEYS.RECORDS, JSON.stringify(records));
 
-    // Agregar a cola de sincronización
     const queue = getQueue();
     queue.push(record);
     localStorage.setItem(KEYS.QUEUE, JSON.stringify(queue));
@@ -801,7 +790,6 @@
     syncQueue(false);
   }
 
-  // Sincronización con Google Apps Script
   async function syncQueue(manual = false) {
     const cfg = getCfg();
     const queue = getQueue();
@@ -831,17 +819,16 @@
         if (manual) showToast(`✓ ${queue.length} registros sincronizados`);
       }
     } catch (err) {
-      if (manual) showToast('No se pudo conectar. Se reintentará luego.');
+      if (manual) showToast('No se pudo conectar. Revisa permisos en Apps Script.');
     }
   }
 
   window.addEventListener('online', () => { updateHeaderStatus(); syncQueue(false); });
   window.addEventListener('offline', updateHeaderStatus);
 
-  // Modales: Configuración e Historial
   function openSettings() {
     const cfg = getCfg();
-    document.getElementById('cfgApiUrl').value = cfg.apiUrl || '';
+    document.getElementById('cfgApiUrl').value = cfg.apiUrl || DEFAULT_API_URL;
     document.getElementById('cfgOperator').value = cfg.operator || 'Medidor 1';
     document.getElementById('cfgTarget').value = cfg.target || 500;
     document.getElementById('settingsModal').classList.add('open');
@@ -849,7 +836,7 @@
 
   function saveSettings() {
     const cfg = {
-      apiUrl: document.getElementById('cfgApiUrl').value.trim(),
+      apiUrl: document.getElementById('cfgApiUrl').value.trim() || DEFAULT_API_URL,
       operator: document.getElementById('cfgOperator').value.trim() || 'Medidor 1',
       target: parseInt(document.getElementById('cfgTarget').value, 10) || 500
     };
@@ -875,15 +862,14 @@
         alert('No se encontró la pestaña "Padron" o está vacía.');
       }
     } catch (e) {
-      alert('Error descargando el padrón. Verifica la conexión y la URL.');
+      alert('Error descargando el padrón. Verifica la conexión y permisos.');
     }
   }
 
   function importCsvRoster() {
     const raw = document.getElementById('csvRosterInput').value.trim();
     if (!raw) return;
-    const lines = raw.split(/?
-/).filter(Boolean);
+    const lines = raw.split(/\r?\n/).filter(Boolean);
     const parsed = lines.map(line => {
       const sep = line.includes(';') ? ';' : ',';
       const [cedula = '', nombre = '', area = ''] = line.split(sep).map(s => s.trim());
@@ -933,8 +919,7 @@
       r.largoCamisa, r.largoManga, r.espalda, r.pecho, r.cintura, r.hombro, r.puno, r.obs, r.alerta, r.medidor, r.timestamp
     ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
 
-    const csv = '﻿' + [headers.join(','), ...rows].join('
-');
+    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -946,7 +931,6 @@
     document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('open'));
   }
 
-  // Registro Service Worker para uso 100% Offline
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
