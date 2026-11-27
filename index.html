@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Tallaje Promo 51 Medicina UC</title>
+  <title>Tallaje Promo 51 UC — Captura Rápida</title>
   <link rel="manifest" href="manifest.json" />
   <style>
     :root {
@@ -102,7 +102,7 @@
 
     .search-wrap { position: relative; }
     .search-row { display: flex; gap: 8px; }
-    input[type="text"], input[type="number"], textarea {
+    input[type="text"], input[type="number"], select, textarea {
       width: 100%;
       padding: 11px 12px;
       font-size: 16px;
@@ -113,7 +113,7 @@
       outline: none;
       transition: border-color 0.15s;
     }
-    input:focus, textarea:focus { border-color: var(--accent); }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     input.warn-input { border-color: var(--warn); background: #fffbeb; }
 
     .btn-ghost {
@@ -134,7 +134,7 @@
       background: #fff;
       border: 1px solid var(--border);
       border-radius: 10px;
-      max-height: 240px;
+      max-height: 260px;
       overflow-y: auto;
       z-index: 25;
       box-shadow: 0 10px 25px rgba(15,23,42,0.15);
@@ -153,7 +153,7 @@
     .dropdown-item:active { background: var(--accent-soft); }
     .dropdown-item strong { font-size: 14px; display: block; }
     .dropdown-item span { font-size: 12px; color: var(--muted); }
-    .pill-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+    .pill-status { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
     .pill-done { background: var(--ok-soft); color: var(--ok); }
     .pill-pend { background: #f1f5f9; color: var(--muted); }
 
@@ -191,6 +191,7 @@
 
     .seg-group { display: grid; gap: 6px; margin-bottom: 10px; }
     .seg-2 { grid-template-columns: repeat(2, 1fr); }
+    .seg-3 { grid-template-columns: repeat(3, 1fr); }
     .seg-7 { grid-template-columns: repeat(7, 1fr); }
     .seg-btn {
       padding: 11px 4px;
@@ -207,6 +208,11 @@
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
+    }
+    .seg-btn.active-dark {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
     }
 
     #alertBox {
@@ -313,7 +319,7 @@
 
 <header>
   <div class="brand">
-    <h1 id="headerTitle">Tallaje Taller</h1>
+    <h1 id="headerTitle">Tallaje Promo 51 UC</h1>
     <small id="progressText">Medidos: 0 / 500</small>
   </div>
   <div class="header-actions">
@@ -328,12 +334,19 @@
 <div id="toast" class="toast">Guardado correctamente</div>
 
 <main>
-  <!-- 1. Buscador de Padrón -->
+  <!-- 1. Filtro por Clínica y Buscador de Padrón -->
   <section class="card">
     <div class="card-title">
-      <span>1. Buscar Persona (Padrón)</span>
+      <span>1. Clínica y Buscador (Padrón)</span>
       <span id="rosterCount">0 en lista</span>
     </div>
+
+    <div class="field" style="margin-bottom: 8px;">
+      <select id="clinicFilter" onchange="onClinicFilterChange()">
+        <option value="">Todas las clínicas / grupos</option>
+      </select>
+    </div>
+
     <div class="search-wrap">
       <div class="search-row">
         <input type="text" id="searchInput" placeholder="Buscar por nombre o cédula..." autocomplete="off" />
@@ -343,26 +356,44 @@
     </div>
   </section>
 
-  <!-- 2. Identificación y Bordado -->
+  <!-- 2. Tipo, Clínica, Identificación y Bordado -->
   <section class="card">
-    <div class="card-title"><span>2. Datos y Bordado de Camisa</span></div>
+    <div class="card-title"><span>2. Perfil, Clínica y Bordado</span></div>
+
+    <div class="seg-group seg-2" id="tipoGroup">
+      <button type="button" class="seg-btn active-dark" data-val="Graduando" onclick="selectTipo(this)">🎓 Graduando</button>
+      <button type="button" class="seg-btn" data-val="Familiar" onclick="selectTipo(this)">👥 Familiar</button>
+    </div>
+
+    <div id="prefijoWrap">
+      <label style="font-size:12px; font-weight:600; color:#334155; display:block; margin-bottom:5px;">Prefijo del Bordado</label>
+      <div class="seg-group seg-3" id="prefijoGroup">
+        <button type="button" class="seg-btn active" data-val="Dr." onclick="selectPrefijo(this)">Dr.</button>
+        <button type="button" class="seg-btn" data-val="Dra." onclick="selectPrefijo(this)">Dra.</button>
+        <button type="button" class="seg-btn" data-val="" onclick="selectPrefijo(this)">Sin prefijo</button>
+      </div>
+    </div>
+
     <div class="grid-2" style="margin-bottom: 10px;">
+      <div class="field">
+        <label for="clinica">Clínica / Grupo *</label>
+        <input type="text" id="clinica" list="clinicDatalist" placeholder="Ej. Clínica 1 / Familiar" />
+        <datalist id="clinicDatalist"></datalist>
+      </div>
       <div class="field">
         <label for="cedula">Cédula / ID</label>
         <input type="text" id="cedula" inputmode="numeric" placeholder="Ej. 28123456" />
       </div>
-      <div class="field">
-        <label for="area">Área / Grupo (Opc.)</label>
-        <input type="text" id="area" placeholder="Ej. Medicina / Admin" />
-      </div>
     </div>
+
     <div class="field" style="margin-bottom: 10px;">
       <label for="nombreCompleto">Nombre Completo *</label>
       <input type="text" id="nombreCompleto" placeholder="Ej. Yaldahir Edison Gabriel Gonzalez Guillen" oninput="autoSuggestEmbroidery()" />
     </div>
+
     <div class="field">
       <label for="bordado">Texto Exacto a Bordar *</label>
-      <input type="text" id="bordado" placeholder="Ej. Dr. Yaldahir Gonzalez Guillen" oninput="updateEmbroideryPreview()" />
+      <input type="text" id="bordado" placeholder="Ej. Dr. Yaldahir Gonzalez" oninput="updateEmbroideryPreview()" />
     </div>
     <div class="embroidery-box">
       <span class="embroidery-text" id="embroideryPreview">Vista previa bordado</span>
@@ -480,8 +511,8 @@
     </div>
 
     <div class="field">
-      <label>O pegar listado CSV (Cedula,Nombre,Area)</label>
-      <textarea id="csvRosterInput" rows="4" placeholder="28123456,Yaldahir Edison Gabriel Gonzalez Guillen,Medicina&#10;15987654,Maria Perez,Administracion"></textarea>
+      <label>O pegar listado CSV (Cedula,Nombre,Clinica,Tipo)</label>
+      <textarea id="csvRosterInput" rows="4" placeholder="28123456,Yaldahir Edison Gabriel Gonzalez Guillen,Clinica 1,Graduando&#10;15987654,Maria Perez,Clinica 2,Graduando"></textarea>
       <button class="btn-ghost" style="padding:10px; margin-top:4px;" onclick="importCsvRoster()">Importar Listado Pegado</button>
     </div>
   </div>
@@ -503,7 +534,7 @@
 </div>
 
 <script>
-  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxlkaDn6ZLwSCs6b90NipEhN_BHyaJjfrfe5TxcUs1uEtk_Vvg8MUk4914lC9wK_8Y8/exec';
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw6BnhG2Nhec5HSKZleHTs3rrROR1rQVcTTFvRiwc1NzLfdmfFEY5QUkjs_1lGnyOgb/exec';
 
   const KEYS = {
     CFG: 'tallaje_cfg_v1',
@@ -513,6 +544,8 @@
   };
 
   let state = {
+    tipo: 'Graduando',
+    prefijo: 'Dr.',
     corte: 'Caballero',
     manga: 'Larga',
     talla: 'M',
@@ -521,8 +554,14 @@
 
   function getCfg() {
     const saved = JSON.parse(localStorage.getItem(KEYS.CFG) || '{}');
+    let apiUrl = saved.apiUrl || DEFAULT_API_URL;
+    if (apiUrl === 'https://script.google.com/macros/s/AKfycbxlkaDn6ZLwSCs6b90NipEhN_BHyaJjfrfe5TxcUs1uEtk_Vvg8MUk4914lC9wK_8Y8/exec') {
+      apiUrl = DEFAULT_API_URL;
+      saved.apiUrl = DEFAULT_API_URL;
+      localStorage.setItem(KEYS.CFG, JSON.stringify(saved));
+    }
     return {
-      apiUrl: saved.apiUrl || DEFAULT_API_URL,
+      apiUrl,
       operator: saved.operator || 'Medidor 1',
       target: saved.target || 500
     };
@@ -542,6 +581,54 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  function refreshClinicOptions() {
+    const roster = getRoster();
+    const records = getRecords();
+    const filterSelect = document.getElementById('clinicFilter');
+    const datalist = document.getElementById('clinicDatalist');
+    const currentFilter = filterSelect.value;
+
+    const clinicCounts = {};
+    const doneIds = new Set(records.map(r => String(r.cedula).trim()).filter(Boolean));
+    const doneNames = new Set(records.map(r => r.nombreCompleto.toLowerCase().trim()));
+
+    roster.forEach(p => {
+      const c = (p.clinica || p.area || 'Sin clínica').trim();
+      if (!clinicCounts[c]) clinicCounts[c] = { total: 0, done: 0 };
+      clinicCounts[c].total++;
+      const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
+      if (isDone) clinicCounts[c].done++;
+    });
+
+    records.forEach(r => {
+      const c = (r.clinica || '').trim();
+      if (c && !clinicCounts[c]) clinicCounts[c] = { total: 0, done: 0 };
+    });
+
+    const clinics = Object.keys(clinicCounts).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+
+    filterSelect.innerHTML = `<option value="">Todas las clínicas / grupos (${roster.length})</option>` +
+      clinics.map(c => {
+        const info = clinicCounts[c];
+        const label = info.total > 0 ? `${c} (${info.done}/${info.total} medidos)` : c;
+        return `<option value="${c}">${label}</option>`;
+      }).join('');
+
+    if (clinics.includes(currentFilter)) filterSelect.value = currentFilter;
+
+    datalist.innerHTML = clinics.map(c => `<option value="${c}">`).join('');
+  }
+
+  function onClinicFilterChange() {
+    const selected = document.getElementById('clinicFilter').value;
+    if (selected && !document.getElementById('clinica').value) {
+      document.getElementById('clinica').value = selected;
+    }
+    if (document.getElementById('searchInput').value.trim()) {
+      document.getElementById('searchInput').dispatchEvent(new Event('input'));
+    }
   }
 
   function updateHeaderStatus() {
@@ -565,6 +652,45 @@
       badge.className = 'badge badge-ok';
       badge.textContent = '● Sincronizado';
     }
+    refreshClinicOptions();
+  }
+
+  function selectTipo(btn) {
+    const val = btn.dataset.val;
+    setTipoValue(val);
+    if (val === 'Graduando') {
+      if (!state.prefijo) setPrefijoValue('Dr.');
+    } else {
+      setPrefijoValue('');
+      if (!document.getElementById('clinica').value.trim()) {
+        document.getElementById('clinica').value = 'Familiar';
+      }
+    }
+    state.embroideryTouched = false;
+    autoSuggestEmbroidery();
+  }
+
+  function setTipoValue(val) {
+    state.tipo = val;
+    document.querySelectorAll('#tipoGroup .seg-btn').forEach(b => {
+      b.classList.toggle('active-dark', b.dataset.val === val);
+    });
+  }
+
+  function selectPrefijo(btn) {
+    const val = btn.dataset.val;
+    setPrefijoValue(val);
+    if (val === 'Dra.') setSegValue('corte', 'Dama');
+    else if (val === 'Dr.') setSegValue('corte', 'Caballero');
+    state.embroideryTouched = false;
+    autoSuggestEmbroidery();
+  }
+
+  function setPrefijoValue(val) {
+    state.prefijo = val;
+    document.querySelectorAll('#prefijoGroup .seg-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.val === val);
+    });
   }
 
   function selectSeg(group, btn) {
@@ -584,16 +710,27 @@
   }
 
   function autoSuggestEmbroidery() {
-    const full = document.getElementById('nombreCompleto').value.trim();
+    let full = document.getElementById('nombreCompleto').value.trim();
     const bordadoInput = document.getElementById('bordado');
     if (!state.embroideryTouched) {
-      const parts = full.split(/\s+/).filter(Boolean);
-      if (parts.length >= 3) {
-        const firstName = parts[0];
-        const lastName = parts.length >= 4 ? parts[parts.length - 2] : parts[1];
-        bordadoInput.value = `${firstName} ${lastName}`;
+      if (!full) {
+        bordadoInput.value = '';
       } else {
-        bordadoInput.value = full;
+        const m = full.match(/^(Dra?\.?)\s+(.*)$/i);
+        if (m) {
+          const detected = m[1].toLowerCase().includes('a') ? 'Dra.' : 'Dr.';
+          setPrefijoValue(detected);
+          setSegValue('corte', detected === 'Dra.' ? 'Dama' : 'Caballero');
+          full = m[2].trim();
+        }
+        const parts = full.split(/\s+/).filter(Boolean);
+        let baseName = full;
+        if (parts.length >= 3) {
+          const firstName = parts[0];
+          const lastName = parts.length >= 4 ? parts[parts.length - 2] : parts[1];
+          baseName = `${firstName} ${lastName}`;
+        }
+        bordadoInput.value = state.prefijo ? `${state.prefijo} ${baseName}` : baseName;
       }
     }
     updateEmbroideryPreview();
@@ -658,32 +795,44 @@
 
   searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim().toLowerCase();
-    if (!q) { dropdown.classList.remove('open'); return; }
+    const clinicSel = document.getElementById('clinicFilter').value;
+    if (!q && !clinicSel) { dropdown.classList.remove('open'); return; }
+
     const roster = getRoster();
     const records = getRecords();
     const doneIds = new Set(records.map(r => String(r.cedula).trim()).filter(Boolean));
     const doneNames = new Set(records.map(r => r.nombreCompleto.toLowerCase().trim()));
 
-    const matches = roster.filter(p =>
-      String(p.cedula || '').toLowerCase().includes(q) ||
-      String(p.nombre || '').toLowerCase().includes(q)
-    ).slice(0, 25);
+    const matches = roster.filter(p => {
+      const pClinic = (p.clinica || p.area || '').trim();
+      if (clinicSel && pClinic !== clinicSel) return false;
+      if (!q) return true;
+      return String(p.cedula || '').toLowerCase().includes(q) ||
+             String(p.nombre || '').toLowerCase().includes(q);
+    }).slice(0, 30);
 
     if (matches.length === 0) {
       dropdown.innerHTML = '<div class="dropdown-item"><span>Sin coincidencias en padrón. Llena los datos abajo.</span></div>';
     } else {
       dropdown.innerHTML = matches.map(p => {
         const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
+        const cLabel = p.clinica || p.area || '';
         return `<div class="dropdown-item" onclick='selectPerson(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
           <div>
             <strong>${p.nombre}</strong>
-            <span>CI: ${p.cedula || 'S/N'} ${p.area ? '· ' + p.area : ''}</span>
+            <span>CI: ${p.cedula || 'S/N'} ${cLabel ? '· ' + cLabel : ''} ${p.tipo ? '· ' + p.tipo : ''}</span>
           </div>
           <span class="pill-status ${isDone ? 'pill-done' : 'pill-pend'}">${isDone ? '✓ Medido' : 'Pendiente'}</span>
         </div>`;
       }).join('');
     }
     dropdown.classList.add('open');
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (document.getElementById('clinicFilter').value || searchInput.value.trim()) {
+      searchInput.dispatchEvent(new Event('input'));
+    }
   });
 
   document.addEventListener('click', e => {
@@ -702,18 +851,23 @@
       showToast('Registro previo cargado para edición');
     } else {
       resetForm(false);
+      const tipo = p.tipo && p.tipo.toLowerCase().includes('fam') ? 'Familiar' : 'Graduando';
+      setTipoValue(tipo);
+      setPrefijoValue(tipo === 'Graduando' ? 'Dr.' : '');
       document.getElementById('cedula').value = p.cedula || '';
       document.getElementById('nombreCompleto').value = p.nombre || '';
-      document.getElementById('area').value = p.area || '';
+      document.getElementById('clinica').value = p.clinica || p.area || document.getElementById('clinicFilter').value || '';
       autoSuggestEmbroidery();
       document.getElementById('bordado').focus();
     }
   }
 
   function loadRecordIntoForm(r) {
+    setTipoValue(r.tipo || 'Graduando');
+    setPrefijoValue(r.prefijo ?? (r.tipo === 'Familiar' ? '' : 'Dr.'));
+    document.getElementById('clinica').value = r.clinica || r.area || '';
     document.getElementById('cedula').value = r.cedula || '';
     document.getElementById('nombreCompleto').value = r.nombreCompleto || '';
-    document.getElementById('area').value = r.area || '';
     document.getElementById('bordado').value = r.bordado || '';
     state.embroideryTouched = true;
     updateEmbroideryPreview();
@@ -727,13 +881,18 @@
   }
 
   function resetForm(notify = true) {
-    ['cedula','nombreCompleto','area','bordado','pecho','cintura','espalda','hombro','largoCamisa','largoManga','puno','obs'].forEach(id => {
+    const keepClinic = document.getElementById('clinicFilter').value;
+    ['cedula','nombreCompleto','bordado','pecho','cintura','espalda','hombro','largoCamisa','largoManga','puno','obs'].forEach(id => {
       const el = document.getElementById(id);
       el.value = '';
       el.classList.remove('warn-input');
     });
+    document.getElementById('clinica').value = keepClinic || '';
     document.querySelectorAll('.hint').forEach(h => h.textContent = '');
     document.getElementById('alertBox').style.display = 'none';
+    setTipoValue('Graduando');
+    setPrefijoValue('Dr.');
+    setSegValue('corte', 'Caballero');
     state.embroideryTouched = false;
     updateEmbroideryPreview();
     if (notify) showToast('Formulario listo para nueva persona');
@@ -742,6 +901,7 @@
   function saveRecord() {
     const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
     const bordado = document.getElementById('bordado').value.trim();
+    const clinica = document.getElementById('clinica').value.trim();
     if (!nombreCompleto || !bordado) {
       alert('Por favor completa el Nombre Completo y el Texto a Bordar.');
       return;
@@ -752,7 +912,9 @@
     const record = {
       cedula: document.getElementById('cedula').value.trim(),
       nombreCompleto,
-      area: document.getElementById('area').value.trim(),
+      tipo: state.tipo,
+      clinica: clinica || (state.tipo === 'Familiar' ? 'Familiar' : 'General'),
+      prefijo: state.prefijo || '',
       bordado,
       caracteres: bordado.length,
       corte: state.corte,
@@ -872,8 +1034,8 @@
     const lines = raw.split(/\r?\n/).filter(Boolean);
     const parsed = lines.map(line => {
       const sep = line.includes(';') ? ';' : ',';
-      const [cedula = '', nombre = '', area = ''] = line.split(sep).map(s => s.trim());
-      return { cedula, nombre, area };
+      const [cedula = '', nombre = '', clinica = '', tipo = 'Graduando'] = line.split(sep).map(s => s.trim());
+      return { cedula, nombre, clinica, tipo: tipo || 'Graduando' };
     }).filter(p => p.nombre && p.nombre.toLowerCase() !== 'nombre');
 
     localStorage.setItem(KEYS.ROSTER, JSON.stringify(parsed));
@@ -890,8 +1052,8 @@
       list.innerHTML = records.map((r, i) => `
         <div class="record-item">
           <div>
-            <strong>${r.bordado}</strong>
-            <small>${r.nombreCompleto} · CI: ${r.cedula || 'S/N'}</small>
+            <strong>${r.bordado} <span style="font-weight:400; font-size:12px; color:#2563eb;">(${r.tipo || 'Graduando'})</span></strong>
+            <small>${r.nombreCompleto} · ${r.clinica || ''}</small>
             <small>${r.corte} · Manga ${r.manga} · Talla <b>${r.talla}</b> · Pecho ${r.pecho || '-'}cm</small>
           </div>
           <button class="btn-ghost" style="padding:8px 10px;" onclick="editFromHistory(${i})">Editar</button>
@@ -913,9 +1075,9 @@
   function exportLocalCsv() {
     const records = getRecords();
     if (records.length === 0) { alert('No hay registros para exportar.'); return; }
-    const headers = ['Cedula','NombreCompleto','Area','TextoBordar','Caracteres','Corte','Manga','Talla','LargoCamisa','LargoManga','AnchoEspalda','PechoSisa','Cintura','AnchoHombro','ContornoPuno','Observaciones','Alerta','Medidor','Timestamp'];
+    const headers = ['Cedula','NombreCompleto','Tipo','Clinica','Prefijo','TextoBordar','Caracteres','Corte','Manga','Talla','LargoCamisa','LargoManga','AnchoEspalda','PechoSisa','Cintura','AnchoHombro','ContornoPuno','Observaciones','Alerta','Medidor','Timestamp'];
     const rows = records.map(r => [
-      r.cedula, r.nombreCompleto, r.area, r.bordado, r.caracteres, r.corte, r.manga, r.talla,
+      r.cedula, r.nombreCompleto, r.tipo, r.clinica, r.prefijo, r.bordado, r.caracteres, r.corte, r.manga, r.talla,
       r.largoCamisa, r.largoManga, r.espalda, r.pecho, r.cintura, r.hombro, r.puno, r.obs, r.alerta, r.medidor, r.timestamp
     ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
 
@@ -923,7 +1085,7 @@
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `respaldo_tallaje_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `respaldo_tallaje_promo51_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   }
 
