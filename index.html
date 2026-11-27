@@ -342,7 +342,7 @@
 
 <header>
   <div class="brand">
-    <h1 id="headerTitle">Tallaje Promo 51 UC</h1>
+    <h1 id="headerTitle">Tallaje Promo 51 UC <span style="font-size:11px;font-weight:500;color:#94a3b8;">(v4)</span></h1>
     <small id="progressText">Medidos: 0 / 500</small>
   </div>
   <div class="header-actions">
@@ -608,8 +608,17 @@
     });
   }
 
+  function safeParse(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      localStorage.removeItem(key);
+      return fallback;
+    }
+  }
   function getCfg() {
-    const saved = JSON.parse(localStorage.getItem(KEYS.CFG) || '{}');
+    const saved = safeParse(KEYS.CFG, {});
     let apiUrl = saved.apiUrl || DEFAULT_API_URL;
     if (apiUrl === 'https://script.google.com/macros/s/AKfycbxlkaDn6ZLwSCs6b90NipEhN_BHyaJjfrfe5TxcUs1uEtk_Vvg8MUk4914lC9wK_8Y8/exec') {
       apiUrl = DEFAULT_API_URL;
@@ -623,13 +632,16 @@
     };
   }
   function getRoster() {
-    return JSON.parse(localStorage.getItem(KEYS.ROSTER) || '[]');
+    const data = safeParse(KEYS.ROSTER, []);
+    return Array.isArray(data) ? data : [];
   }
   function getRecords() {
-    return JSON.parse(localStorage.getItem(KEYS.RECORDS) || '[]');
+    const data = safeParse(KEYS.RECORDS, []);
+    return Array.isArray(data) ? data : [];
   }
   function getQueue() {
-    return JSON.parse(localStorage.getItem(KEYS.QUEUE) || '[]');
+    const data = safeParse(KEYS.QUEUE, []);
+    return Array.isArray(data) ? data : [];
   }
 
   function showToast(msg) {
