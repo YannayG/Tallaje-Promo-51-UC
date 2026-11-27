@@ -168,6 +168,29 @@
     }
     .field label .hint { color: var(--warn); font-weight: 700; }
 
+    .clinic-pills {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .clinic-pill {
+      padding: 8px 2px;
+      border: 1.5px solid var(--border);
+      background: #f8fafc;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #334155;
+      cursor: pointer;
+      text-align: center;
+    }
+    .clinic-pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     .embroidery-box {
       margin-top: 8px;
       background: #f8fafc;
@@ -374,16 +397,23 @@
       </div>
     </div>
 
-    <div class="grid-2" style="margin-bottom: 10px;">
-      <div class="field">
-        <label for="clinica">Clínica / Grupo *</label>
-        <input type="text" id="clinica" list="clinicDatalist" placeholder="Ej. Clínica 1 / Familiar" />
-        <datalist id="clinicDatalist"></datalist>
+    <div class="field" style="margin-bottom: 10px;">
+      <label for="clinica">N° de Clínica (Toca o escribe el número) *</label>
+      <div class="clinic-pills" id="clinicQuickBtns">
+        <button type="button" class="clinic-pill" data-c="Clínica 1" onclick="setQuickClinic('Clínica 1')">C1</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 2" onclick="setQuickClinic('Clínica 2')">C2</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 3" onclick="setQuickClinic('Clínica 3')">C3</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 4" onclick="setQuickClinic('Clínica 4')">C4</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 5" onclick="setQuickClinic('Clínica 5')">C5</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 6" onclick="setQuickClinic('Clínica 6')">C6</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 7" onclick="setQuickClinic('Clínica 7')">C7</button>
+        <button type="button" class="clinic-pill" data-c="Clínica 8" onclick="setQuickClinic('Clínica 8')">C8</button>
       </div>
-      <div class="field">
-        <label for="cedula">Cédula / ID</label>
-        <input type="text" id="cedula" inputmode="numeric" placeholder="Ej. 28123456" />
+      <div class="grid-2">
+        <input type="text" id="clinica" list="clinicDatalist" placeholder="Ej. 1 o Clínica 1" oninput="syncClinicPillHighlight()" onblur="normalizeClinicInput()" />
+        <input type="text" id="cedula" inputmode="numeric" placeholder="Cédula (Opcional)" />
       </div>
+      <datalist id="clinicDatalist"></datalist>
     </div>
 
     <div class="field" style="margin-bottom: 10px;">
@@ -506,13 +536,13 @@
     <hr style="border:none; border-top:1px solid #e2e8f0; width:100%;" />
 
     <div class="field">
-      <label>Cargar Padrón desde Google Sheets (Pestaña "Padron")</label>
+      <label>Cargar Padrón desde Google Sheets (Pestaña "Padron_App")</label>
       <button class="btn-ghost" style="padding:11px;" onclick="fetchRosterFromSheets()">⬇️ Descargar Padrón desde Sheets</button>
     </div>
 
     <div class="field">
       <label>O pegar listado CSV (Cedula,Nombre,Clinica,Tipo)</label>
-      <textarea id="csvRosterInput" rows="4" placeholder="28123456,Yaldahir Edison Gabriel Gonzalez Guillen,Clinica 1,Graduando&#10;15987654,Maria Perez,Clinica 2,Graduando"></textarea>
+      <textarea id="csvRosterInput" rows="4" placeholder="28123456,Yaldahir Edison Gabriel Gonzalez Guillen,Clínica 1,Graduando&#10;15987654,Maria Perez,Clínica 2,Graduando"></textarea>
       <button class="btn-ghost" style="padding:10px; margin-top:4px;" onclick="importCsvRoster()">Importar Listado Pegado</button>
     </div>
   </div>
@@ -535,6 +565,7 @@
 
 <script>
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw6BnhG2Nhec5HSKZleHTs3rrROR1rQVcTTFvRiwc1NzLfdmfFEY5QUkjs_1lGnyOgb/exec';
+  const PRESET_CLINICS = ['Clínica 1', 'Clínica 2', 'Clínica 3', 'Clínica 4', 'Clínica 5', 'Clínica 6', 'Clínica 7', 'Clínica 8'];
 
   const KEYS = {
     CFG: 'tallaje_cfg_v1',
@@ -551,6 +582,31 @@
     talla: 'M',
     embroideryTouched: false
   };
+
+  function normalizeClinicLabel(val) {
+    const s = String(val || '').trim();
+    if (!s) return '';
+    if (/^\d+$/.test(s)) return 'Clínica ' + s;
+    return s;
+  }
+
+  function setQuickClinic(label) {
+    document.getElementById('clinica').value = label;
+    syncClinicPillHighlight();
+  }
+
+  function normalizeClinicInput() {
+    const inp = document.getElementById('clinica');
+    inp.value = normalizeClinicLabel(inp.value);
+    syncClinicPillHighlight();
+  }
+
+  function syncClinicPillHighlight() {
+    const current = normalizeClinicLabel(document.getElementById('clinica').value).toLowerCase();
+    document.querySelectorAll('#clinicQuickBtns .clinic-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.c.toLowerCase() === current);
+    });
+  }
 
   function getCfg() {
     const saved = JSON.parse(localStorage.getItem(KEYS.CFG) || '{}');
@@ -591,11 +647,13 @@
     const currentFilter = filterSelect.value;
 
     const clinicCounts = {};
+    PRESET_CLINICS.forEach(c => { clinicCounts[c] = { total: 0, done: 0 }; });
+
     const doneIds = new Set(records.map(r => String(r.cedula).trim()).filter(Boolean));
     const doneNames = new Set(records.map(r => r.nombreCompleto.toLowerCase().trim()));
 
     roster.forEach(p => {
-      const c = (p.clinica || p.area || 'Sin clínica').trim();
+      const c = normalizeClinicLabel(p.clinica || p.area || '') || 'Sin clínica asignada';
       if (!clinicCounts[c]) clinicCounts[c] = { total: 0, done: 0 };
       clinicCounts[c].total++;
       const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
@@ -603,7 +661,7 @@
     });
 
     records.forEach(r => {
-      const c = (r.clinica || '').trim();
+      const c = normalizeClinicLabel(r.clinica || '');
       if (c && !clinicCounts[c]) clinicCounts[c] = { total: 0, done: 0 };
     });
 
@@ -618,15 +676,15 @@
 
     if (clinics.includes(currentFilter)) filterSelect.value = currentFilter;
 
-    datalist.innerHTML = clinics.map(c => `<option value="${c}">`).join('');
+    datalist.innerHTML = clinics.filter(c => c !== 'Sin clínica asignada').map(c => `<option value="${c}">`).join('');
   }
 
   function onClinicFilterChange() {
     const selected = document.getElementById('clinicFilter').value;
-    if (selected && !document.getElementById('clinica').value) {
-      document.getElementById('clinica').value = selected;
+    if (selected && selected !== 'Sin clínica asignada') {
+      setQuickClinic(selected);
     }
-    if (document.getElementById('searchInput').value.trim()) {
+    if (document.getElementById('searchInput').value.trim() || selected) {
       document.getElementById('searchInput').dispatchEvent(new Event('input'));
     }
   }
@@ -663,7 +721,7 @@
     } else {
       setPrefijoValue('');
       if (!document.getElementById('clinica').value.trim()) {
-        document.getElementById('clinica').value = 'Familiar';
+        setQuickClinic('Familiar');
       }
     }
     state.embroideryTouched = false;
@@ -804,23 +862,23 @@
     const doneNames = new Set(records.map(r => r.nombreCompleto.toLowerCase().trim()));
 
     const matches = roster.filter(p => {
-      const pClinic = (p.clinica || p.area || '').trim();
+      const pClinic = normalizeClinicLabel(p.clinica || p.area || '') || 'Sin clínica asignada';
       if (clinicSel && pClinic !== clinicSel) return false;
       if (!q) return true;
       return String(p.cedula || '').toLowerCase().includes(q) ||
              String(p.nombre || '').toLowerCase().includes(q);
-    }).slice(0, 30);
+    }).slice(0, 35);
 
     if (matches.length === 0) {
-      dropdown.innerHTML = '<div class="dropdown-item"><span>Sin coincidencias en padrón. Llena los datos abajo.</span></div>';
+      dropdown.innerHTML = '<div class="dropdown-item"><span>Sin coincidencias en esa clínica. Cambia el filtro arriba o llena los datos abajo.</span></div>';
     } else {
       dropdown.innerHTML = matches.map(p => {
         const isDone = (p.cedula && doneIds.has(String(p.cedula).trim())) || doneNames.has(String(p.nombre).toLowerCase().trim());
-        const cLabel = p.clinica || p.area || '';
+        const cLabel = normalizeClinicLabel(p.clinica || p.area || '');
         return `<div class="dropdown-item" onclick='selectPerson(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
           <div>
             <strong>${p.nombre}</strong>
-            <span>CI: ${p.cedula || 'S/N'} ${cLabel ? '· ' + cLabel : ''} ${p.tipo ? '· ' + p.tipo : ''}</span>
+            <span>${p.cedula ? 'CI: ' + p.cedula + ' · ' : ''}${cLabel || 'Sin clínica'} ${p.tipo ? '· ' + p.tipo : ''}</span>
           </div>
           <span class="pill-status ${isDone ? 'pill-done' : 'pill-pend'}">${isDone ? '✓ Medido' : 'Pendiente'}</span>
         </div>`;
@@ -856,7 +914,10 @@
       setPrefijoValue(tipo === 'Graduando' ? 'Dr.' : '');
       document.getElementById('cedula').value = p.cedula || '';
       document.getElementById('nombreCompleto').value = p.nombre || '';
-      document.getElementById('clinica').value = p.clinica || p.area || document.getElementById('clinicFilter').value || '';
+      const filterClinic = document.getElementById('clinicFilter').value;
+      const assignedClinic = normalizeClinicLabel(p.clinica || p.area || '') ||
+        (filterClinic && filterClinic !== 'Sin clínica asignada' ? filterClinic : '');
+      setQuickClinic(assignedClinic);
       autoSuggestEmbroidery();
       document.getElementById('bordado').focus();
     }
@@ -865,7 +926,7 @@
   function loadRecordIntoForm(r) {
     setTipoValue(r.tipo || 'Graduando');
     setPrefijoValue(r.prefijo ?? (r.tipo === 'Familiar' ? '' : 'Dr.'));
-    document.getElementById('clinica').value = r.clinica || r.area || '';
+    setQuickClinic(normalizeClinicLabel(r.clinica || r.area || ''));
     document.getElementById('cedula').value = r.cedula || '';
     document.getElementById('nombreCompleto').value = r.nombreCompleto || '';
     document.getElementById('bordado').value = r.bordado || '';
@@ -887,7 +948,7 @@
       el.value = '';
       el.classList.remove('warn-input');
     });
-    document.getElementById('clinica').value = keepClinic || '';
+    setQuickClinic(keepClinic && keepClinic !== 'Sin clínica asignada' ? keepClinic : '');
     document.querySelectorAll('.hint').forEach(h => h.textContent = '');
     document.getElementById('alertBox').style.display = 'none';
     setTipoValue('Graduando');
@@ -901,7 +962,7 @@
   function saveRecord() {
     const nombreCompleto = document.getElementById('nombreCompleto').value.trim();
     const bordado = document.getElementById('bordado').value.trim();
-    const clinica = document.getElementById('clinica').value.trim();
+    const clinicaRaw = normalizeClinicLabel(document.getElementById('clinica').value);
     if (!nombreCompleto || !bordado) {
       alert('Por favor completa el Nombre Completo y el Texto a Bordar.');
       return;
@@ -909,11 +970,13 @@
 
     const warnings = validateMeasures();
     const cfg = getCfg();
+    const clinicaFinal = clinicaRaw || (state.tipo === 'Familiar' ? 'Familiar' : 'General');
+
     const record = {
       cedula: document.getElementById('cedula').value.trim(),
       nombreCompleto,
       tipo: state.tipo,
-      clinica: clinica || (state.tipo === 'Familiar' ? 'Familiar' : 'General'),
+      clinica: clinicaFinal,
       prefijo: state.prefijo || '',
       bordado,
       caracteres: bordado.length,
@@ -942,13 +1005,26 @@
     else records.unshift(record);
     localStorage.setItem(KEYS.RECORDS, JSON.stringify(records));
 
+    // Actualiza la clínica en el padrón local del teléfono si fue asignada o modificada
+    if (clinicaRaw) {
+      const roster = getRoster();
+      const rIdx = roster.findIndex(p =>
+        (record.cedula && String(p.cedula).trim() === record.cedula) ||
+        String(p.nombre || '').toLowerCase().trim() === record.nombreCompleto.toLowerCase()
+      );
+      if (rIdx >= 0) {
+        roster[rIdx].clinica = clinicaRaw;
+        localStorage.setItem(KEYS.ROSTER, JSON.stringify(roster));
+      }
+    }
+
     const queue = getQueue();
     queue.push(record);
     localStorage.setItem(KEYS.QUEUE, JSON.stringify(queue));
 
     updateHeaderStatus();
     resetForm(false);
-    showToast(`✓ Guardado: ${record.bordado}`);
+    showToast(`✓ Guardado: ${record.bordado} (${clinicaFinal})`);
     syncQueue(false);
   }
 
@@ -1017,11 +1093,15 @@
       const res = await fetch(cfg.apiUrl + '?action=padron');
       const data = await res.json();
       if (Array.isArray(data.padron)) {
-        localStorage.setItem(KEYS.ROSTER, JSON.stringify(data.padron));
+        const cleaned = data.padron.map(p => ({
+          ...p,
+          clinica: normalizeClinicLabel(p.clinica || p.area || '')
+        }));
+        localStorage.setItem(KEYS.ROSTER, JSON.stringify(cleaned));
         updateHeaderStatus();
-        showToast(`✓ ${data.padron.length} personas cargadas`);
+        showToast(`✓ ${cleaned.length} personas cargadas`);
       } else {
-        alert('No se encontró la pestaña "Padron" o está vacía.');
+        alert('No se encontró la pestaña "Padron_App" o está vacía.');
       }
     } catch (e) {
       alert('Error descargando el padrón. Verifica la conexión y permisos.');
@@ -1031,11 +1111,13 @@
   function importCsvRoster() {
     const raw = document.getElementById('csvRosterInput').value.trim();
     if (!raw) return;
-    const lines = raw.split(/\r?\n/).filter(Boolean);
+    const lines = raw.split(/
+?
+/).filter(Boolean);
     const parsed = lines.map(line => {
       const sep = line.includes(';') ? ';' : ',';
       const [cedula = '', nombre = '', clinica = '', tipo = 'Graduando'] = line.split(sep).map(s => s.trim());
-      return { cedula, nombre, clinica, tipo: tipo || 'Graduando' };
+      return { cedula, nombre, clinica: normalizeClinicLabel(clinica), tipo: tipo || 'Graduando' };
     }).filter(p => p.nombre && p.nombre.toLowerCase() !== 'nombre');
 
     localStorage.setItem(KEYS.ROSTER, JSON.stringify(parsed));
@@ -1053,8 +1135,8 @@
         <div class="record-item">
           <div>
             <strong>${r.bordado} <span style="font-weight:400; font-size:12px; color:#2563eb;">(${r.tipo || 'Graduando'})</span></strong>
-            <small>${r.nombreCompleto} · ${r.clinica || ''}</small>
-            <small>${r.corte} · Manga ${r.manga} · Talla <b>${r.talla}</b> · Pecho ${r.pecho || '-'}cm</small>
+            <small>${r.nombreCompleto} · <b>${r.clinica || ''}</b></small>
+            <small>${r.corte} · Talla <b>${r.talla}</b> · Pecho ${r.pecho || '-'}cm · Cintura ${r.cintura || '-'}cm</small>
           </div>
           <button class="btn-ghost" style="padding:8px 10px;" onclick="editFromHistory(${i})">Editar</button>
         </div>
@@ -1081,7 +1163,8 @@
       r.largoCamisa, r.largoManga, r.espalda, r.pecho, r.cintura, r.hombro, r.puno, r.obs, r.alerta, r.medidor, r.timestamp
     ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
 
-    const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const csv = '﻿' + [headers.join(','), ...rows].join('
+');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
